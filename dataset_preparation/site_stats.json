@@ -1,0 +1,90 @@
+[
+  {
+    "idx": 1,
+    "name": "Landing Site Bedrock (Octavia E. Butler Landing)",
+    "sols": "15-30",
+    "date_range": "[2021-03-06 TO 2021-03-22]",
+    "frames": 624,
+    "total_files": 1872,
+    "total_gb": 3.09,
+    "geology": "Crater floor basaltic bedrock, flat pavement, landing thruster blast zone",
+    "lighting_value": "Baseline calibration sequences, diverse solar elevations from high noon to late afternoon"
+  },
+  {
+    "idx": 2,
+    "name": "South Seitah Dunes & Megaripples",
+    "sols": "195-225",
+    "date_range": "[2021-09-07 TO 2021-10-09]",
+    "frames": 5969,
+    "total_files": 17907,
+    "total_gb": 85.81,
+    "geology": "Aeolian ripple fields, basaltic sand dunes, layered outcrops (Bastide & Brac)",
+    "lighting_value": "Extreme shadow dynamics across sharp dune ridges and micro-relief under grazing sun"
+  },
+  {
+    "idx": 3,
+    "name": "Delta Front Scarp & Enchanted Lake",
+    "sols": "420-445",
+    "date_range": "[2022-04-26 TO 2022-05-23]",
+    "frames": 2212,
+    "total_files": 6636,
+    "total_gb": 29.25,
+    "geology": "Massive delta front cliffs, steep scarps, layered mudstone and boulder conglomerate",
+    "lighting_value": "Vertical cliff face shadow movement, deep self-shadowing, multi-scale terrain occlusion"
+  },
+  {
+    "idx": 4,
+    "name": "Skinner Ridge (Delta Top)",
+    "sols": "455-475",
+    "date_range": "[2022-06-01 TO 2022-06-22]",
+    "frames": 3727,
+    "total_files": 11181,
+    "total_gb": 46.86,
+    "geology": "Delta top sedimentary layered rocks, fine mudstones, polygonal fracture patterns",
+    "lighting_value": "Stationary multi-sol core sampling stop, pristine multi-illumination angle phase coverage"
+  },
+  {
+    "idx": 5,
+    "name": "Tenby Mudstones (Amalik)",
+    "sols": "520-545",
+    "date_range": "[2022-08-07 TO 2022-09-02]",
+    "frames": 2140,
+    "total_files": 6420,
+    "total_gb": 16.18,
+    "geology": "Fine-grained deltaic mudstones, river deposits, sample cache depot preparation",
+    "lighting_value": "Dense diurnal solar phase cycle across stationary rover orientations"
+  },
+  {
+    "idx": 6,
+    "name": "Margin Carbonate Unit (Jurabi Point)",
+    "sols": "955-985",
+    "date_range": "[2023-10-28 TO 2023-11-28]",
+    "frames": 2948,
+    "total_files": 8844,
+    "total_gb": 39.08,
+    "geology": "Stromatolite-like carbonate formations, silica-rich rocks along the inner crater margin",
+    "lighting_value": "Highly reflective light-toned carbonate minerals with unique specular and scattering properties"
+  },
+  {
+    "idx": 7,
+    "name": "Bright Angel Channel & Neretva Vallis",
+    "sols": "1165-1190",
+    "date_range": "[2024-05-30 TO 2024-06-26]",
+    "frames": 3478,
+    "total_files": 10434,
+    "total_gb": 39.3,
+    "geology": "Ancient river paleochannel, water-transported rounded boulders, bright jagged outcrop blocks",
+    "lighting_value": "Complex multi-albedo scene with high contrast between bright bedrock blocks and dark channel sands"
+  },
+  {
+    "idx": 8,
+    "name": "Crater Rim Lookout (Aurora Peak)",
+    "sols": "1830-1860",
+    "date_range": "[2026-04-14 TO 2026-05-16]",
+    "frames": 2473,
+    "total_files": 7419,
+    "total_gb": 22.25,
+    "geology": "High-altitude Jezero crater rim viewpoint, panoramic lookouts over the entire crater basin",
+    "lighting_value": "Long-range atmospheric haze, distant crater rim horizon, sunset/sunrise solar phase variations"
+  }
+]
