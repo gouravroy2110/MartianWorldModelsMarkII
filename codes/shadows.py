@@ -172,10 +172,45 @@ class ScreenSpaceShadowRayMarcher:
         return shadow_mask.clamp(0.0, 1.0)
 
 
+import xml.etree.ElementTree as ET
+import math
+
+def parse_xml_telemetry(xml_path):
+    info = {"solar_elevation": None, "solar_azimuth": None}
+    if not os.path.exists(xml_path):
+        raise FileNotFoundError(f"Missing required XML telemetry file: {xml_path}")
+        
+    tree = ET.parse(xml_path)
+    for elem in tree.getroot().iter():
+        tag = elem.tag.split("}")[-1].lower()
+        val = (elem.text or "").strip()
+        if not val: continue
+        if tag == "solar_elevation":
+            info["solar_elevation"] = float(val)
+        elif tag == "solar_azimuth":
+            info["solar_azimuth"] = float(val)
+            
+    if info["solar_elevation"] is None or info["solar_azimuth"] is None:
+        raise ValueError(f"CRITICAL: Missing solar vector telemetry (solar_elevation, solar_azimuth) in {xml_path}. Halting pipeline rather than using silent fallbacks.")
+        
+    return info
+
+def get_sun_vector(elevation_deg, azimuth_deg):
+    # Convert from degrees to radians
+    el = math.radians(elevation_deg)
+    az = math.radians(azimuth_deg)
+    # Convert spherical to Cartesian unit vector
+    # In camera space (Z forward, Y down, X right), we need to map the sun vector.
+    # We enforce light source from above (Y < 0).
+    omega_x = math.sin(az) * math.cos(el)
+    omega_y = -abs(math.sin(el))
+    omega_z = -abs(math.cos(az) * math.cos(el))
+    return torch.tensor([omega_x, omega_y, omega_z], dtype=torch.float32)
+
 def run_shadow_pipeline(
     image_dir: str,
     geometry_dir: str,
-    sun_json_path: str,
+    metadata_dir: str,
     output_dir: str,
     num_steps: int = 48,
     step_size: float = 0.025
@@ -183,12 +218,6 @@ def run_shadow_pipeline(
     os.makedirs(output_dir, exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Executing Dithered Screen-Space Shadow Ray Marcher on {device}...")
-
-    # Load predicted sun vectors
-    sun_vectors_dict = {}
-    if os.path.exists(sun_json_path):
-        with open(sun_json_path, "r", encoding="utf-8") as f:
-            sun_vectors_dict = json.load(f)
 
     marcher = ScreenSpaceShadowRayMarcher(
         num_steps=num_steps,
@@ -199,35 +228,30 @@ def run_shadow_pipeline(
         dither=True
     )
 
-    image_paths = sorted(glob.glob(os.path.join(image_dir, "*.png")))
+    image_paths = sorted(glob.glob(os.path.join(image_dir, "ZL*.png")))
     if not image_paths:
-        print(f"No PNG files found in {image_dir}")
+        print(f"No ZL* PNG files found in {image_dir}")
         return
 
     for idx, img_path in enumerate(image_paths, 1):
         filename = os.path.splitext(os.path.basename(img_path))[0]
         depth_path = os.path.join(geometry_dir, f"{filename}_depth.npy")
+        xml_path = os.path.join(metadata_dir, f"{filename}.xml")
 
         if not os.path.exists(depth_path):
             print(f"Skipping {filename}: Missing depth map at {depth_path}")
             continue
 
         print(f"[{idx}/{len(image_paths)}] Processing shadow ray-marching for: {filename}")
-        depth_disp = np.load(depth_path)
-        z_metric = disparity_to_metric_depth(depth_disp, target_mean_distance=2.0)
+        
+        # We now use the true, unscaled metric depth Z directly from our new geometry pipeline!
+        z_metric = np.load(depth_path)
         depth_tensor = torch.from_numpy(z_metric).float().to(device)
 
-        if filename in sun_vectors_dict:
-            raw_omega = sun_vectors_dict[filename]["sun_vector"]
-            # Enforce light source from above/behind camera: omega_y < 0, omega_z < 0
-            omega_x = float(raw_omega[0])
-            omega_y = -abs(float(raw_omega[1]))
-            omega_z = -abs(float(raw_omega[2]))
-            sun_vec = torch.tensor([omega_x, omega_y, omega_z], dtype=torch.float32)
-            print(f"  -> Aligned Light Vector: [{omega_x:.4f}, {omega_y:.4f}, {omega_z:.4f}]")
-        else:
-            sun_vec = torch.tensor([0.0, -0.30, -0.95], dtype=torch.float32)
-            print(f"  -> Default Light Vector: {sun_vec.tolist()}")
+        # Parse ground-truth telemetry
+        telemetry = parse_xml_telemetry(xml_path)
+        sun_vec = get_sun_vector(telemetry["solar_elevation"], telemetry["solar_azimuth"])
+        print(f"  -> Extracted Ground Truth Sun Vector: {sun_vec.tolist()} (from Elev: {telemetry['solar_elevation']}°, Az: {telemetry['solar_azimuth']}°)")
 
         with torch.no_grad():
             shadow_mask = marcher.march(depth_tensor, sun_vec, fov_deg=15.0)
@@ -260,12 +284,11 @@ def run_shadow_pipeline(
 
     print(f"All shadow computations complete. Outputs saved in: {output_dir}")
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Screen-Space Shadow Ray Marcher.")
-    parser.add_argument("--image_dir", type=str, default="data/nasa_raw")
+    parser.add_argument("--image_dir", type=str, default="sample_data_for_local_usage/images")
     parser.add_argument("--geometry_dir", type=str, default="output/geometry")
-    parser.add_argument("--sun_json", type=str, default="output/sun_estimation/predicted_sun_vectors.json")
+    parser.add_argument("--metadata_dir", type=str, default="sample_data_for_local_usage/metadata")
     parser.add_argument("--output_dir", type=str, default="output/shadows")
     parser.add_argument("--num_steps", type=int, default=48)
     parser.add_argument("--step_size", type=float, default=0.025)
@@ -274,7 +297,7 @@ if __name__ == "__main__":
     run_shadow_pipeline(
         args.image_dir,
         args.geometry_dir,
-        args.sun_json,
+        args.metadata_dir,
         args.output_dir,
         args.num_steps,
         args.step_size
